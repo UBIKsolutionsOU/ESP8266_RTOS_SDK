@@ -54,13 +54,38 @@ eagle.app.v6.irom0text.bin, downloads to flash 0x40000
 
 blank.bin, downloads to flash 0x7E000
 
-# Amateur archology (RTOS SDK 1.5.0 in 2020)
+# Amateur archaeology (i.e. setting up Espressif RTOS SDK 1.5.0)
 
-Instructions for getting the RTOS SDK running with Ubik projects. Linux (Debian) only, sorry.
+Instructions for getting the RTOS SDK running with Ubik projects. Tested on Linux (Debian 11 bullseye), please adapt to your environment.
 
 ## Getting toolchain 4.8.5
 
-We need version 4.8.5 of espressif's gcc toolchain. Pre-built binaries are linked here: https://github.com/espressif/ESP8266_RTOS_SDK
+We need version 4.8.5 of espressif's gcc toolchain. The "newer" version 5.2 doesn't compile Espressifs v1.x SDK.
+
+### Custom built Espressif toolchain
+
+Some people have kindly automated the building of Espressif toolchain and SDK. This will build NONOS SDK v2.1 which we won't be using. The toolchain is what we need.
+
+We need to patch crosstools configure.ac because it doesn't support bash v5 (braindead version checking). Abbreviated instructions:
+
+```
+$ sudo apt install make unrar-free autoconf automake libtool gcc g++ gperf flex bison texinfo gawk ncurses-dev libexpat-dev python-dev python sed git unzip bash help2man wget bzip2 libtool-bin
+$ mkdir -p ~/local/lib/esp8266
+$ cd ~/local/lib/esp8266
+$ git clone --recursive https://github.com/pfalcon/esp-open-sdk.git
+$ cd esp-open-sdk
+$ sed -i -r 's/(GNU bash, version.*\|4)/\1\|5/' crosstool-NG/configure.ac
+$ make STANDALONE=n
+$ export PATH="$HOME/local/lib/esp8266/esp-open-sdk/xtensa-lx106-elf/bin:$PATH"
+```
+
+Add last command to .bash_profile or your tmuxinator's `pre_window` command to make it persistant.
+
+### Pre-built toolchain from Espressif
+
+NB! The pre-built toolchain is missing some libraries required by 1.x SDK, specifically `libhal.a`. So avoid this and build our own (see previous section).
+
+Pre-built binaries are linked here: https://github.com/espressif/ESP8266_RTOS_SDK
 
 Download and installation instructions:
 
@@ -72,7 +97,7 @@ $ mv xtensa-lx106-elf xtensa-lx106-elf-linux64-1.22.0-88-gde0bdc1-4.8.5
 $ export PATH="$HOME/local/lib/esp8266/xtensa-lx106-elf-linux64-1.22.0-88-gde0bdc1-4.8.5/bin:$PATH"
 ```
 
-Add last command to .bash_profile to make it persistant.
+Add last command to .bash_profile or your tmuxinator's `pre_window` command to make it persistant.
 
 ## Getting RTOS SDK 1.5.0
 
@@ -87,7 +112,7 @@ $ git submodule update --init
 $ export SDK_PATH="$HOME/projects/ubik/acov/lib/src/ESP8266_RTOS_SDK"
 ```
 
-Add last command to .bash_profile to make it persistant.
+Add last command to .bash_profile or your tmuxinator's `pre_window` command to make it persistant.
 
 ### Building RTOS SDK 1.5.0 ###
 
@@ -96,9 +121,7 @@ Building the SDK itself I haven't tried. There are pre-built binaries in `lib` i
 If you need to build third party libraries, e.g. lwip:
 
 ```
-$ sudo apt install make unrar-free autoconf automake libtool gcc g++ gperf
-    flex bison texinfo gawk ncurses-dev libexpat-dev python-dev python
-    sed git unzip bash help2man wget bzip2 libtool-bin
+$ sudo apt install make unrar-free autoconf automake libtool gcc g++ gperf flex bison texinfo gawk ncurses-dev libexpat-dev python-dev python sed git unzip bash help2man wget bzip2 libtool-bin
 $ cd ~/projects/ubik/acov/lib/src/ESP8266_RTOS_SDK/third_party
 $ ./make_lib.sh lwip
 ```
@@ -133,3 +156,5 @@ Whenever working on projects with this hacked esptool, activate the virtualenv b
 ```
 $ . ~/projects/ubik/acov/venv/bin/activate
 ```
+
+Add this command to your tmuxinator's `pre_window` command to make it persistant.
